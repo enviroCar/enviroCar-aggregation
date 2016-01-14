@@ -24,8 +24,6 @@ import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -36,12 +34,6 @@ import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.conn.scheme.Scheme;
-import org.apache.http.conn.scheme.SchemeRegistry;
-import org.apache.http.conn.ssl.AllowAllHostnameVerifier;
-import org.apache.http.conn.ssl.SSLSocketFactory;
-import org.apache.http.conn.ssl.TrustStrategy;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.envirocar.analyse.entities.Point;
 import org.envirocar.analyse.properties.Properties;
 import org.envirocar.analyse.util.PointViaJsonMapIterator;
@@ -257,22 +249,7 @@ public class AggregationAlgorithm {
     }
     
     protected HttpClient createClient() throws IOException, KeyManagementException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException {
-        DefaultHttpClient result = new DefaultHttpClient();
-        SchemeRegistry sr = result.getConnectionManager().getSchemeRegistry();
-        
-        SSLSocketFactory sslsf = new SSLSocketFactory(new TrustStrategy() {
-            
-            @Override
-            public boolean isTrusted(X509Certificate[] arg0, String arg1)
-                    throws CertificateException {
-                return true;
-            }
-        }, new AllowAllHostnameVerifier());
-        
-        Scheme httpsScheme2 = new Scheme("https", 443, sslsf);
-        sr.register(httpsScheme2);
-        
-        return result;
+        return Utils.createClient();
     }
     
     public void runAlgorithm() throws IOException{
