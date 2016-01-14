@@ -107,12 +107,14 @@ public class PostgresPointService implements PointService {
     private final String distField = "dist";
     private final String aggregated_measurement_idField = "aggregated_measurement_id";
     private final String aggregation_dateField = "aggregation_date";
+    private final String categoryField = "category";
     
     private final SimpleDateFormat iso8601DateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
     
     private final String pgCreationString = "CREATE TABLE "
             + aggregated_MeasurementsTableName + " ("
             + idField + " SERIAL PRIMARY KEY, "
+            + categoryField + " VARCHAR(32),"
             + contribPointCountField + " INTEGER,"
             + contribTrackCountField + " INTEGER,"
             + bearingField + " DOUBLE PRECISION,"
@@ -192,6 +194,13 @@ public class PostgresPointService implements PointService {
     public Point getNearestNeighbor(Point point, double distance, double maxBearingDelta) {
         
         String queryString = pgNearestNeighborCreationString.replace(distance_exp, "" + distance).replace(geomFromText_exp, createST_GeometryFromTextStatement(point.getX(), point.getY()));
+        
+        if (point.getTimeCategory() != null) {
+            /**
+             * inject category clause
+             */
+            queryString = queryString.replace(" where ", " where "+categoryField+" = '"+point.getTimeCategory().toString() +"' AND ");
+        }
         
         ResultSet resultSet = this.connection.executeQueryStatement(queryString);
         
@@ -483,7 +492,8 @@ public class PostgresPointService implements PointService {
                 geometryEncodedField +", "+
                 contribPointCountField +", "+
                 contribTrackCountField +", "+
-			lastContributingTrackField +", ";
+		lastContributingTrackField +", "+
+                categoryField +", ";
         
         Iterator<String> propertyNameIterator = Properties
                 .getPropertiesOfInterestDatabase().keySet().iterator();
@@ -501,6 +511,7 @@ public class PostgresPointService implements PointService {
         values.add(point.getNumberOfPointsUsedForAggregation());
         values.add(point.getNumberOfTracksUsedForAggregation());
         values.add(point.getLastContributingTrack());
+        values.add(point.getTimeCategory().toString());
         
         while (propertyNameIterator.hasNext()) {
             String propertyName = (String) propertyNameIterator.next();

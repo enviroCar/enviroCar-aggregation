@@ -14,22 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- /**
-  * Copyright 2016 52°North Initiative for Geospatial Open Source
-  * Software GmbH
-  *
-  * Licensed under the Apache License, Version 2.0 (the "License");
-  * you may not use this file except in compliance with the License.
-  * You may obtain a copy of the License at
-  *
-  *    http://www.apache.org/licenses/LICENSE-2.0
-  *
-  * Unless required by applicable law or agreed to in writing, software
-  * distributed under the License is distributed on an "AS IS" BASIS,
-  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  * See the License for the specific language governing permissions and
-  * limitations under the License.
-  */
 package org.envirocar.analyse;
 
 import java.io.IOException;
@@ -88,6 +72,8 @@ public class AggregationAlgorithm {
     private double maxx, maxy, minx, miny;
     private boolean useBearing = true;
     private final RegionalTimeBasedCategory timeBasedManager;
+    private boolean useCategories;
+    private final double maxBearingDelta;
     
     public AggregationAlgorithm() {
         this(Double.parseDouble(Properties.getProperty("pointDistance")));
@@ -98,6 +84,9 @@ public class AggregationAlgorithm {
         this.distance = distance;
         
         this.timeBasedManager = new DEBasedCategory();
+        useCategories = Boolean.parseBoolean(Properties.getProperty("useCategories"));
+        maxBearingDelta = Double.parseDouble(Properties.getProperty("maxBearingDelta"));
+        useBearing = maxBearingDelta != 0.0d;
     }
     
     public AggregationAlgorithm(double minx, double miny, double maxx, double maxy){
@@ -121,8 +110,6 @@ public class AggregationAlgorithm {
         };
         
         bbox =  Utils.geometryFactory.createPolygon(coordinates);
-        this.distance = Double.parseDouble(Properties.getProperty("pointDistance"));
-        pointService = new PostgresPointService(this.getBbox());
     }
     
     public void runAlgorithm(Iterator<Point> newPoints, String trackId) {
@@ -133,17 +120,22 @@ public class AggregationAlgorithm {
         
         pointService.insertTrackIntoAggregatedTracksTable(trackId);
         
-        /**
-         * set the timezone of the track
-         */
-        DateTime trackTime = null;
-        timeBasedManager.updateTimeZone(trackTime);
-        
         Point nextPoint;
+        DateTime trackTime = null;
         while (newPoints.hasNext()) {
             nextPoint = newPoints.next();
             
-            nextPoint.setTimeCategory(timeBasedManager.fromTime(nextPoint.getTime()));
+            /**
+            * set the timezone of the track
+            */
+            if (trackTime == null) {
+                trackTime = nextPoint.getTime();
+                timeBasedManager.updateTimeZone(trackTime);
+            }
+            
+            if (useCategories) {
+                nextPoint.setTimeCategory(timeBasedManager.fromTime(nextPoint.getTime()));
+            }
             
             /*
             * check if point is fit for aggregation (one or more value not null or 0)
@@ -158,7 +150,7 @@ public class AggregationAlgorithm {
             */
             
             Point nearestNeighbor = pointService.getNearestNeighbor(
-                    nextPoint, distance, useBearing ? Double.parseDouble(Properties.getProperty("maxBearingDelta")) : 0.0);
+                    nextPoint, distance, useBearing ? maxBearingDelta : 0.0);
             
             if (nearestNeighbor != null) {
                 
