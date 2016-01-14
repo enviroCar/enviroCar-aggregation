@@ -50,14 +50,14 @@ public class AggregationAlgorithmPostgresTest {
         AggregationAlgorithm algorithm = new AggregationAlgorithm(0.00018);
         
 		
-        algorithm.runAlgorithm("53b5228ee4b01607fa566b78");
-        algorithm.runAlgorithm("53b52282e4b01607fa566469");
+        algorithm.runAlgorithm("569635d1e4b000f94da7fc7c");
+        algorithm.runAlgorithm("569635d6e4b000f94da7ff63");
         
-		try {
-			CSVExport.exportAsCSV(algorithm.getResultSet(), File.createTempFile("aggregation", ".csv").getAbsolutePath());
-		} catch (IOException e) {
-			LOGGER.error("Could not export resultSet as CSV:", e);
-		}
+//		try {
+//			CSVExport.exportAsCSV(algorithm.getResultSet(), File.createTempFile("aggregation", ".csv").getAbsolutePath());
+//		} catch (IOException e) {
+//			LOGGER.error("Could not export resultSet as CSV:", e);
+//		}
 		
 	}
 }

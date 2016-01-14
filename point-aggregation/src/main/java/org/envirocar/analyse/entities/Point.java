@@ -61,5 +61,7 @@ public interface Point {
 	void setX(double x);
 	
 	void setY(double y);
+
+        public Double getBearing();
 	
 }

@@ -29,15 +29,11 @@ public interface PointService {
 	 * @param distance the maximum distance in meters
 	 * @return
 	 */
-	Point getNearestNeighbor(Point point, double distance);
+	Point getNearestNeighbor(Point point, double distance, double maxBearingDelta);
 
 	void addToResultSet(Point newPoint);
 	
 	boolean updateResultSet(String idOfPointToBeReplaced, Point replacementPoint);
-
-	List<Point> getResultSet();
-
-	boolean isFitForAggregation(Point nextPoint);
 
 	boolean trackAlreadyAggregated(String trackId);
 

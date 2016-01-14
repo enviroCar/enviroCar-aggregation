@@ -35,6 +35,16 @@ public class InMemoryPoint implements Point {
 	private List<String> tracksUsedForAggregation;
 	private int numberOfTracksUsedForAggregation;
 	private String lastContributingTrack;
+        
+        private static Map<String, String> jsonPropertyMapping;
+        
+        static {
+            jsonPropertyMapping = new HashMap<>();
+            jsonPropertyMapping.put("GPS Bearing", "bearing");
+            jsonPropertyMapping.put("Speed", "speed");
+            jsonPropertyMapping.put("CO2", "co2");
+        }
+        
 	
 	public InMemoryPoint(String id, double x, double y, Map<String, Object> propertyMap, int numberOfPointsUsedForAggregation, int numberOfTracksUsedForAggregation, String lastContributingTrack, Map<String, Integer> propertyPointsUsedForAggregationMap){
 		this.id = id;
@@ -190,7 +200,7 @@ public class InMemoryPoint implements Point {
 			if (phenomenonsObject instanceof Map<?, ?>) {
 				Map<?, ?> phenomenonsMap = (Map<?, ?>) phenomenonsObject;
 
-				Map<String, Object> propertiesofInterestMap = Utils.getValuesFromFromJSON(phenomenonsMap);
+				Map<String, Object> propertiesofInterestMap = Utils.getValuesFromFromJSON(phenomenonsMap, jsonPropertyMapping);
 				
 				Point point = new InMemoryPoint(id, coordinatesXY[0], coordinatesXY[1], propertiesofInterestMap, 1, 1, trackID, new HashMap<String, Integer>());
 				
@@ -200,5 +210,13 @@ public class InMemoryPoint implements Point {
 		
 		return null;
 	}
+
+    @Override
+    public Double getBearing() {
+        if (propertyMap.containsKey("bearing")) {
+            return (Double) propertyMap.get("bearing");
+        }
+        return null;
+    }
 
 }

@@ -32,71 +32,93 @@ import com.vividsolutions.jts.geom.GeometryFactory;
 
 public class Utils {
     
-	private static final Logger LOGGER = LoggerFactory
-			.getLogger(Utils.class);
-	
-	public static GeometryFactory geometryFactory = new GeometryFactory();
-	
+    private static final Logger LOGGER = LoggerFactory
+            .getLogger(Utils.class);
+    
+    public static GeometryFactory geometryFactory = new GeometryFactory();
+    
     public static double[] convertWKTPointToXY(String wktPointAsString){
-    	
-    	double[] result = new double[2];
-    	
-    	wktPointAsString = wktPointAsString.replace("POINT(", "");
-    	wktPointAsString = wktPointAsString.replace(")", "");
-    	
-    	String[] xyAsStringArray = wktPointAsString.split(" ");
-    	
-    	result[0] = Double.parseDouble(xyAsStringArray[0].trim());
-    	result[1] = Double.parseDouble(xyAsStringArray[1].trim());
-    	
-    	return result;
+        
+        double[] result = new double[2];
+        
+        wktPointAsString = wktPointAsString.replace("POINT(", "");
+        wktPointAsString = wktPointAsString.replace(")", "");
+        
+        String[] xyAsStringArray = wktPointAsString.split(" ");
+        
+        result[0] = Double.parseDouble(xyAsStringArray[0].trim());
+        result[1] = Double.parseDouble(xyAsStringArray[1].trim());
+        
+        return result;
     }
     
     public static double[] getCoordinatesXYFromJSON(LinkedHashMap<?, ?> geometryMap) {
-
-		double[] result = new double[2];
-
-		Object coordinatesObject = geometryMap.get("coordinates");
-
-		if (coordinatesObject instanceof List<?>) {
-			List<?> coordinatesList = (List<?>) coordinatesObject;
-
-			if (coordinatesList.size() > 1) {
-				result[0] = (Double) coordinatesList.get(0);
-				result[1] = (Double) coordinatesList.get(1);
-			} else {
-				LOGGER.error("Coordinates array is too small (must be 2), size is: "
-						+ coordinatesList.size());
-			}
-		}
-
-		return result;
-
-	}
-	
-    public static Map<String, Object> getValuesFromFromJSON(Map<?, ?> phenomenonMap) {
-		
-		Map<String, Object> result = new HashMap<>();
-		
-		for (String propertyName : Properties.getPropertiesOfInterestDatatypeMapping().keySet()) {
-			Object propertyObject = phenomenonMap.get(propertyName);
-			
+        
+        double[] result = new double[2];
+        
+        Object coordinatesObject = geometryMap.get("coordinates");
+        
+        if (coordinatesObject instanceof List<?>) {
+            List<?> coordinatesList = (List<?>) coordinatesObject;
+            
+            if (coordinatesList.size() > 1) {
+                result[0] = (Double) coordinatesList.get(0);
+                result[1] = (Double) coordinatesList.get(1);
+            } else {
+                LOGGER.error("Coordinates array is too small (must be 2), size is: "
+                        + coordinatesList.size());
+            }
+        }
+        
+        return result;
+        
+    }
+    
+    public static Map<String, Object> getValuesFromFromJSON(Map<?, ?> phenomenonMap, Map<String, String> jsonPropertyMapping) {
+        
+        Map<String, Object> result = new HashMap<>();
+        
+        for (String propertyName : Properties.getPropertiesOfInterestJson().keySet()) {
+            Object propertyObject = phenomenonMap.get(propertyName);
+            
             if (propertyObject == null){
-            	result.put(propertyName, 0.0);//TODO handle non number properties
-			}else if(propertyObject instanceof LinkedHashMap<?, ?>){
-				result.put(propertyName, ((LinkedHashMap<?, ?>)propertyObject).get("value"));
-			} 
-			
-		}
-				
-		return result;
-		
-	}
+                result.put(mapJsonPropertyToColumnName(propertyName, jsonPropertyMapping), 0.0);//TODO handle non number properties
+            }
+            else if(propertyObject instanceof LinkedHashMap<?, ?>){
+                result.put(mapJsonPropertyToColumnName(propertyName, jsonPropertyMapping), ((LinkedHashMap<?, ?>)propertyObject).get("value"));
+            }
+            
+        }
+        
+        return result;
+        
+    }
+    
+    private static String mapJsonPropertyToColumnName(String s, Map<String, String> jsonPropertyMapping) {
+        if (jsonPropertyMapping.containsKey(s)) {
+            return jsonPropertyMapping.get(s);
+        }
+        else {
+            return s;
+        }
+    }
     
     public static Map<?, ?> parseJsonStream(InputStream stream) throws IOException {
-		ObjectMapper om = new ObjectMapper();
-		final Map<?, ?> json = om.readValue(stream, Map.class);
-		return json;
+        ObjectMapper om = new ObjectMapper();
+        final Map<?, ?> json = om.readValue(stream, Map.class);
+        return json;
     }
-	
+    
+    public static boolean isNumberObjectNullOrZero(Number numberObject) {
+        Number sourceValue = (Number) numberObject;
+        
+        double value = sourceValue.doubleValue();
+        
+        if (value == 0.0) {
+            return true;
+        }
+        
+        return false;
+    }
+    
 }

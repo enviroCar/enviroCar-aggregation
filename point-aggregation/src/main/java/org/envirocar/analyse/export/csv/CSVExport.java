@@ -64,7 +64,7 @@ public class CSVExport {
 		
 		String result = "ID;lon;lat;GeneralNumberOfPointsUsed;GeneralNumberOfTracksUsed;";
 		
-		Iterator<String> propertyNameIterator = Properties.getPropertiesOfInterestDatatypeMapping().keySet().iterator();
+		Iterator<String> propertyNameIterator = Properties.getPropertiesOfInterestDatabase().keySet().iterator();
 				
 		while (propertyNameIterator.hasNext()) {
 			String propertyName = (String) propertyNameIterator.next();
@@ -90,7 +90,7 @@ public class CSVExport {
 		
 		String result = point.getID() + ";" + point.getX() + ";" + point.getY() + ";" + point.getNumberOfPointsUsedForAggregation()+ ";" + point.getNumberOfTracksUsedForAggregation() + ";";
 		
-		Iterator<String> propertyNameIterator = Properties.getPropertiesOfInterestDatatypeMapping().keySet().iterator();
+		Iterator<String> propertyNameIterator = Properties.getPropertiesOfInterestDatabase().keySet().iterator();
 		
 		Map<String, Object> propertyMap = point.getPropertyMap();
 		
