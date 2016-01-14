@@ -52,6 +52,9 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
+import org.envirocar.analyse.categories.DEBasedCategory;
+import org.envirocar.analyse.categories.RegionalTimeBasedCategory;
+import org.joda.time.DateTime;
 
 /**
  * Algorithm to aggregate measurements of tracks that are running through a defined bounding box.
@@ -68,6 +71,7 @@ public class AggregationAlgorithm {
     private PointService pointService;
     private double maxx, maxy, minx, miny;
     private boolean useBearing = true;
+    private final RegionalTimeBasedCategory timeBasedManager;
     
     public AggregationAlgorithm() {
         this(Double.parseDouble(Properties.getProperty("pointDistance")));
@@ -76,6 +80,8 @@ public class AggregationAlgorithm {
     public AggregationAlgorithm(double distance) {
         pointService = new PostgresPointService(this.getBbox());
         this.distance = distance;
+        
+        this.timeBasedManager = new DEBasedCategory();
     }
     
     public AggregationAlgorithm(double minx, double miny, double maxx, double maxy){
@@ -111,9 +117,17 @@ public class AggregationAlgorithm {
         
         pointService.insertTrackIntoAggregatedTracksTable(trackId);
         
+        /**
+         * set the timezone of the track
+         */
+        DateTime trackTime = null;
+        timeBasedManager.updateTimeZone(trackTime);
+        
         Point nextPoint;
         while (newPoints.hasNext()) {
             nextPoint = newPoints.next();
+            
+            nextPoint.setTimeCategory(timeBasedManager.fromTime(nextPoint.getTime()));
             
             /*
             * check if point is fit for aggregation (one or more value not null or 0)

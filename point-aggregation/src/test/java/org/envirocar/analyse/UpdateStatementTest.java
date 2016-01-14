@@ -53,7 +53,7 @@ public class UpdateStatementTest {
         
         pointService.removePoint(oldID, PostgresPointService.aggregated_MeasurementsTableName);
         
-        Point oldPoint = new InMemoryPoint(oldID, oldX, oldY, oldPropertyMap, oldNumberOfPointsUsedForAggregation, oldNumberOfTracksUsedForAggregation, oldLastContributingTrack, oldPropertyPointsUsedForAggregationMap);
+        Point oldPoint = new InMemoryPoint(oldID, null, oldX, oldY, oldPropertyMap, oldNumberOfPointsUsedForAggregation, oldNumberOfTracksUsedForAggregation, oldLastContributingTrack, oldPropertyPointsUsedForAggregationMap);
         
         /*
         * add measurement
@@ -81,7 +81,7 @@ public class UpdateStatementTest {
         updatedPropertyPointsUsedForAggregationMap.put("Speed", updatedNumberOfPointsUsedForSpeed);
         updatedPropertyPointsUsedForAggregationMap.put("CO2", updatedNumberOfPointsUsedForCo2);
         
-        Point updatedPoint = new InMemoryPoint(updatedID, updatedX, updatedY, updatedPropertyMap, updatedNumberOfPointsUsedForAggregation, updatedNumberOfTracksUsedForAggregation, updatedLastContributingTrack, updatedPropertyPointsUsedForAggregationMap);
+        Point updatedPoint = new InMemoryPoint(updatedID, null, updatedX, updatedY, updatedPropertyMap, updatedNumberOfPointsUsedForAggregation, updatedNumberOfTracksUsedForAggregation, updatedLastContributingTrack, updatedPropertyPointsUsedForAggregationMap);
         
         pointService.updateResultSet(oldID, updatedPoint);
         

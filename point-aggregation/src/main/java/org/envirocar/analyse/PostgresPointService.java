@@ -235,7 +235,7 @@ public class PostgresPointService implements PointService {
                     double[] resultXY = Utils
                             .convertWKTPointToXY(resultGeomAsText);
                     
-                    Point resultPoint = new InMemoryPoint(resultID,
+                    Point resultPoint = new InMemoryPoint(resultID, null,
                             resultXY[0], resultXY[1], propertyMap,
                             resultNumberOfContributingPoints,
                             resultNumberOfContributingTracks,
