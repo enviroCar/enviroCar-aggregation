@@ -67,6 +67,7 @@ public class AggregationAlgorithm {
     private double distance;
     private PointService pointService;
     private double maxx, maxy, minx, miny;
+    private boolean useBearing = true;
     
     public AggregationAlgorithm() {
         this(Double.parseDouble(Properties.getProperty("pointDistance")));
@@ -127,7 +128,7 @@ public class AggregationAlgorithm {
             */
             
             Point nearestNeighbor = pointService.getNearestNeighbor(
-                    nextPoint, distance, 0.1);
+                    nextPoint, distance, useBearing ? Double.parseDouble(Properties.getProperty("maxBearingDelta")) : 0.0);
             
             if (nearestNeighbor != null) {
                 
