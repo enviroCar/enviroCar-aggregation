@@ -190,24 +190,9 @@ public class PostgresPointService implements PointService {
                     /**
                      * Bearing comparison
                      */
-                    if (maxBearingDelta != 0.0) {
-                        double bearing = resultSet.getDouble(bearingField);
-                        int bearingCount = resultSet.getInt(bearingCountField);
-                        //bearing comparison is activated
-                        if (point.getBearing() == null) {
-                            //we need to find a neighbour without bearing
-                            if (bearingCount > 0) {
-                                continue;
-                            }
-                        }
-                        else {
-                            //find a neighbour with similar bearing
-                            if (Math.abs(point.getBearing() - bearing) >= maxBearingDelta) {
-                                continue;
-                            }
-                        }
+                    if (!fulFilsBearingConditions(maxBearingDelta, resultSet, point)) {
+                        continue;
                     }
-                    
                     
                     Map<String, Object> propertyMap = new HashMap<>();
                     
@@ -571,6 +556,28 @@ public class PostgresPointService implements PointService {
         }
         
         return false;
+    }
+
+    private boolean fulFilsBearingConditions(double maxBearingDelta, ResultSet resultSet, Point point) throws SQLException {
+        if (maxBearingDelta != 0.0) {
+            double bearing = resultSet.getDouble(bearingField);
+            int bearingCount = resultSet.getInt(bearingCountField);
+            //bearing comparison is activated
+            if (point.getBearing() == null) {
+                //we need to find a neighbour without bearing
+                if (bearingCount > 0) {
+                    return false;
+                }
+            }
+            else {
+                //find a neighbour with similar bearing
+                if (Math.abs(point.getBearing() - bearing) >= maxBearingDelta) {
+                    return false;
+                }
+            }
+        }
+        
+        return true;
     }
 
 }

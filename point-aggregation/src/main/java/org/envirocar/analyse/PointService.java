@@ -16,8 +16,6 @@
  */
 package org.envirocar.analyse;
 
-import java.util.List;
-
 import org.envirocar.analyse.entities.Point;
 
 public interface PointService {
