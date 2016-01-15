@@ -35,7 +35,7 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.envirocar.analyse.entities.Point;
-import org.envirocar.analyse.properties.Properties;
+import org.envirocar.analyse.properties.GlobalProperties;
 import org.envirocar.analyse.util.PointViaJsonMapIterator;
 import org.envirocar.analyse.util.Utils;
 import org.slf4j.Logger;
@@ -43,7 +43,9 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.geom.Geometry;
+import java.util.Properties;
 import org.envirocar.analyse.categories.DEBasedCategory;
 import org.envirocar.analyse.categories.RegionalTimeBasedCategory;
 import org.envirocar.analyse.categories.TimeBasedCategory;
@@ -58,36 +60,53 @@ import org.joda.time.DateTime;
 public class AggregationAlgorithm {
     
     private static final Logger LOGGER = LoggerFactory.getLogger(AggregationAlgorithm.class);
+    private static final double DEFAULT_DISTANCE = 20.0;
+    private static final double DEFAULT_BEARING = 0.0;
     
     private Geometry bbox;
     private double distance;
-    private PointService pointService;
-    private double maxx, maxy, minx, miny;
-    private boolean useBearing = true;
+    private final PointService pointService;
+    private final boolean useBearing;
     private final RegionalTimeBasedCategory timeBasedManager;
-    private boolean useCategories;
+    private final boolean useCategories;
     private final double maxBearingDelta;
+    private final String databaseName;
     
     public AggregationAlgorithm() {
-        this(Double.parseDouble(Properties.getProperty("pointDistance")));
+        this(DEFAULT_DISTANCE, DEFAULT_BEARING, false);
     }
     
-    public AggregationAlgorithm(double distance) {
-        pointService = new PostgresPointService(this.bbox);
+    public AggregationAlgorithm(Properties props) {
+        this.useCategories = Boolean.parseBoolean(props.getProperty("useCategories"));
+        String distanceProp = props.getProperty("pointDistance");
+        this.distance = distanceProp != null ? Double.parseDouble(distanceProp) : DEFAULT_DISTANCE;
+        String bearingProp = props.getProperty("maxBearingDelta");
+        this.maxBearingDelta = bearingProp != null ? Double.parseDouble(bearingProp) : DEFAULT_BEARING;
+        this.useBearing = maxBearingDelta != 0.0;
+        this.timeBasedManager = new DEBasedCategory();
+        this.databaseName = props.getProperty("database");
+        
+        this.pointService = new PostgresPointService(this.bbox, this.databaseName);
+    }
+    
+    public AggregationAlgorithm(double distance, double maxBearing, boolean useCategories) {
         this.distance = distance;
         
         this.timeBasedManager = new DEBasedCategory();
-        useCategories = Boolean.parseBoolean(Properties.getProperty("useCategories"));
-        maxBearingDelta = Double.parseDouble(Properties.getProperty("maxBearingDelta"));
-        useBearing = maxBearingDelta != 0.0d;
+        this.useCategories = useCategories;
+        this.maxBearingDelta = maxBearing;
+        this.useBearing = maxBearingDelta != 0.0;
+        this.databaseName = "envirocar_aggregation";
+        
+        this.pointService = new PostgresPointService(this.bbox, this.databaseName);
     }
     
-    public AggregationAlgorithm(double minx, double miny, double maxx, double maxy){
+    public AggregationAlgorithm(Envelope bbox) {
         this();
-        this.maxx = maxx;
-        this.maxy = maxy;
-        this.minx = minx;
-        this.miny = miny;
+        double maxx = bbox.getMaxX();
+        double maxy = bbox.getMaxY();
+        double minx = bbox.getMinX();
+        double miny = bbox.getMinY();
         
         Coordinate upperRight = new Coordinate(maxx, maxy);
         Coordinate upperLeft = new Coordinate(minx, maxy);
@@ -102,7 +121,7 @@ public class AggregationAlgorithm {
             lowerLeft
         };
         
-        bbox =  Utils.geometryFactory.createPolygon(coordinates);
+        this.bbox =  Utils.geometryFactory.createPolygon(coordinates);
     }
     
     public void runAlgorithm(Iterator<Point> newPoints, String trackId) {
@@ -185,7 +204,7 @@ public class AggregationAlgorithm {
             return;
         }
         
-        HttpGet get = new HttpGet(Properties.getRequestTrackURL()+trackID);
+        HttpGet get = new HttpGet(GlobalProperties.getRequestTrackURL()+trackID);
         
         HttpClient client;
         try {
@@ -212,7 +231,7 @@ public class AggregationAlgorithm {
         
         boolean result = false;
         
-        for (String propertyName : Properties.getPropertiesOfInterestDatabase().keySet()) {
+        for (String propertyName : GlobalProperties.getPropertiesOfInterestDatabase().keySet()) {
             
             Object numberObject = point.getProperty(propertyName);
             
@@ -248,10 +267,10 @@ public class AggregationAlgorithm {
     public void runAlgorithm() throws IOException{
         
         /*
-        * get tracks
-        */
-        
-        List<String> trackIDs = getTrackIDs(minx, miny, maxx, maxy);
+         * get tracks
+         */
+        Envelope env = bbox.getEnvelopeInternal();
+        List<String> trackIDs = getTrackIDs(env.getMinX(), env.getMinY(), env.getMaxX(), env.getMaxY());
         
         /*
         * foreach track
@@ -273,7 +292,7 @@ public class AggregationAlgorithm {
         
         URL url = null;
         try {
-            url = new URL(Properties.getRequestTracksWithinBboxURL() + minx + "," + miny + "," + maxx + "," + maxy);
+            url = new URL(GlobalProperties.getRequestTracksWithinBboxURL() + minx + "," + miny + "," + maxx + "," + maxy);
             
             LOGGER.debug("URL for fetching tracks: " + url.toString());
             

@@ -47,128 +47,129 @@ import com.google.inject.servlet.ServletModule;
 
 @Singleton
 public class ReceiveTracksServlet extends HttpServlet {
-
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 4589872023160154399L;
-	private static final Logger logger = LoggerFactory
-			.getLogger(ReceiveTracksServlet.class);
-	private static final String PRODUCERS_FILE = "/allowed_producers.cfg";
-	private ExecutorService executor;
-
-	private Set<String> allowedProducers;
-	private AggregationAlgorithm algorithm;
-
-	public ReceiveTracksServlet() {
-		this.executor = Executors.newSingleThreadExecutor();
-		this.algorithm = new AggregationAlgorithm();
-	}
-
-	public void init() throws ServletException {
-		super.init();
-		try {
-			this.allowedProducers = FileUtil
-					.readConfigFilePerLine(PRODUCERS_FILE);
-		} catch (IOException e) {
-			throw new ServletException(e);
-		}
-
-	}
-
-	@Override
-	public void destroy() {
-		super.destroy();
-		this.executor.shutdown();
-	}
-
-
-	@Override
-	protected void doPost(HttpServletRequest req, HttpServletResponse resp)
-			throws ServletException, IOException {
-		final String contentType = req.getHeader("Content-Type");
-		final InputStream stream = req.getInputStream();
-		
-		if (!(contentType != null && contentType.startsWith("application/json"))) {
-			throw new IllegalArgumentException("Invalid ContentType");
-		}
-		
-		final Map<?, ?> json = Utils.parseJsonStream(stream);
-		
-		if (verifyRemoteHost(req.getRemoteHost())) {
-			this.executor.submit(new Runnable() {
-
-				public void run() {
-					PointViaJsonMapIterator it;
-					try {
-						it = new PointViaJsonMapIterator(json);
-					} catch (IOException e) {
-						logger.warn("Could not inizialize iterator. Skipping track.", e);
-						return;
-					}
-						
-					algorithm.runAlgorithm(it, it.getOriginalTrackId());
-				}
-				
-			});
-		} else {
-			logger.info("Host {} is not whitelisted. Ignoring request.",
-					req.getRemoteHost());
-		}
-
-		resp.setStatus(204);
-	}
-
-	public synchronized Set<String> getAllowedProducers() {
-		return this.allowedProducers;
-	}
-
-	private synchronized boolean verifyRemoteHost(String remoteHost) {
-		for (String prod : getAllowedProducers()) {
-			if (remoteHost.contains(prod)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	protected String readContent(HttpServletRequest req) throws IOException {
-		String enc = req.getCharacterEncoding();
-		Scanner sc = new Scanner(req.getInputStream(), enc == null ? "utf-8"
-				: enc);
-		StringBuilder sb = new StringBuilder();
-
-		while (sc.hasNext()) {
-			sb.append(sc.nextLine());
-		}
-
-		sc.close();
-		return sb.toString();
-	}
-
-	public static class LocalGuiceServletConfig extends
-			GuiceServletContextListener {
-
-		@Override
-		protected Injector getInjector() {
-			ServiceLoader<Module> loader = ServiceLoader.load(Module.class);
-
-			List<Module> modules = new ArrayList<Module>();
-			for (Module module : loader) {
-				modules.add(module);
-			}
-
-			modules.add(new ServletModule() {
-
-				@Override
-				protected void configureServlets() {
-					serve("/*").with(ReceiveTracksServlet.class);
-				}
-
-			});
-
-			return Guice.createInjector(modules);
-		}
-	}
-
+    
+    /**
+     *
+     */
+    private static final long serialVersionUID = 4589872023160154399L;
+    private static final Logger logger = LoggerFactory
+            .getLogger(ReceiveTracksServlet.class);
+    private static final String PRODUCERS_FILE = "/allowed_producers.cfg";
+    private ExecutorService executor;
+    
+    private Set<String> allowedProducers;
+    private AggregationAlgorithm algorithm;
+    private List<AggregationAlgorithm> algorithms;
+    
+    public ReceiveTracksServlet() {
+        this.executor = Executors.newSingleThreadExecutor();
+        this.algorithm = new AggregationAlgorithm();
+    }
+    
+    public void init() throws ServletException {
+        super.init();
+        try {
+            this.allowedProducers = FileUtil
+                    .readConfigFilePerLine(PRODUCERS_FILE);
+        } catch (IOException e) {
+            throw new ServletException(e);
+        }
+        
+    }
+    
+    @Override
+    public void destroy() {
+        super.destroy();
+        this.executor.shutdown();
+    }
+    
+    
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
+        final String contentType = req.getHeader("Content-Type");
+        final InputStream stream = req.getInputStream();
+        
+        if (!(contentType != null && contentType.startsWith("application/json"))) {
+            throw new IllegalArgumentException("Invalid ContentType");
+        }
+        
+        final Map<?, ?> json = Utils.parseJsonStream(stream);
+        
+        if (verifyRemoteHost(req.getRemoteHost())) {
+            this.executor.submit(new Runnable() {
+                public void run() {
+                    for (AggregationAlgorithm algorithm : algorithms) {
+                        PointViaJsonMapIterator it;
+                        try {
+                            it = new PointViaJsonMapIterator(json);
+                            algorithm.runAlgorithm(it, it.getOriginalTrackId());
+                        } catch (IOException e) {
+                            logger.warn("Could not inizialize iterator. Skipping track.", e);
+                            return;
+                        }                        
+                    }
+                }
+                
+            });
+        } else {
+            logger.info("Host {} is not whitelisted. Ignoring request.",
+                    req.getRemoteHost());
+        }
+        
+        resp.setStatus(204);
+    }
+    
+    public synchronized Set<String> getAllowedProducers() {
+        return this.allowedProducers;
+    }
+    
+    private synchronized boolean verifyRemoteHost(String remoteHost) {
+        for (String prod : getAllowedProducers()) {
+            if (remoteHost.contains(prod)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    protected String readContent(HttpServletRequest req) throws IOException {
+        String enc = req.getCharacterEncoding();
+        Scanner sc = new Scanner(req.getInputStream(), enc == null ? "utf-8"
+                : enc);
+        StringBuilder sb = new StringBuilder();
+        
+        while (sc.hasNext()) {
+            sb.append(sc.nextLine());
+        }
+        
+        sc.close();
+        return sb.toString();
+    }
+    
+    public static class LocalGuiceServletConfig extends
+            GuiceServletContextListener {
+        
+        @Override
+        protected Injector getInjector() {
+            ServiceLoader<Module> loader = ServiceLoader.load(Module.class);
+            
+            List<Module> modules = new ArrayList<Module>();
+            for (Module module : loader) {
+                modules.add(module);
+            }
+            
+            modules.add(new ServletModule() {
+                
+                @Override
+                protected void configureServlets() {
+                    serve("/*").with(ReceiveTracksServlet.class);
+                }
+                
+            });
+            
+            return Guice.createInjector(modules);
+        }
+    }
+    
 }

@@ -47,7 +47,7 @@ import java.util.Map;
 import org.envirocar.analyse.entities.InMemoryPoint;
 import org.envirocar.analyse.entities.Point;
 import org.envirocar.analyse.postgres.PostgresConnection;
-import org.envirocar.analyse.properties.Properties;
+import org.envirocar.analyse.properties.GlobalProperties;
 import org.envirocar.analyse.util.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,10 +69,10 @@ public class PostgresPointService implements PointService {
     
     private PostgresConnection connection = null;
     
-    public static String aggregated_MeasurementsTableName = (String) Properties.getProperty("aggregated_MeasurementsTableName");
-    public static String original_MeasurementsTableName = (String) Properties.getProperty("original_MeasurementsTableName");
-    public static String measurementRelationsTableName = (String) Properties.getProperty("measurement_relationsTableName");
-    public static String aggregatedTracksTableName = (String) Properties.getProperty("aggregatedTracksTableName");
+    public static String aggregated_MeasurementsTableName = (String) GlobalProperties.getProperty("aggregated_MeasurementsTableName");
+    public static String original_MeasurementsTableName = (String) GlobalProperties.getProperty("original_MeasurementsTableName");
+    public static String measurementRelationsTableName = (String) GlobalProperties.getProperty("measurement_relationsTableName");
+    public static String aggregatedTracksTableName = (String) GlobalProperties.getProperty("aggregatedTracksTableName");
     
     private final String spatial_ref_sys = "4326";// TODO from properties
     private final String id_exp = "$id$";
@@ -175,14 +175,14 @@ public class PostgresPointService implements PointService {
     
     private Geometry bbox;
     
-    public PostgresPointService() {
-        this(null);
+    public PostgresPointService(String databaseName) {
+        this(null, databaseName);
     }
     
-    public PostgresPointService(Geometry bbox) {
+    public PostgresPointService(Geometry bbox, String databaseName) {
         this.bbox = bbox;
         
-        this.connection = new PostgresConnection();
+        this.connection = new PostgresConnection(databaseName);
         
         createTable(pgCreationString, aggregated_MeasurementsTableName, true);
         createTable(pgMeasurementRelationsTableCreationString, measurementRelationsTableName, false);
@@ -223,10 +223,10 @@ public class PostgresPointService implements PointService {
                     
                     Map<String, Integer> propertyPointsUsedForAggregationMap = new HashMap<>();
                     
-                    for (String propertyName : Properties
+                    for (String propertyName : GlobalProperties
                             .getPropertiesOfInterestDatabase().keySet()) {
                         
-                        Class<?> propertyClass = Properties
+                        Class<?> propertyClass = GlobalProperties
                                 .getPropertiesOfInterestDatabase().get(
                                         propertyName);
                         
@@ -402,7 +402,7 @@ public class PostgresPointService implements PointService {
     
     private void updateValues(Point source, Point closestPointInRange){
         
-        for (String propertyName : Properties.getPropertiesOfInterestDatabase().keySet()) {
+        for (String propertyName : GlobalProperties.getPropertiesOfInterestDatabase().keySet()) {
             
             double weightedAvg = getWeightedAverage(source, closestPointInRange, propertyName);
             
@@ -523,7 +523,7 @@ public class PostgresPointService implements PointService {
 		lastContributingTrackField +", "+
                 categoryField +", ";
         
-        Iterator<String> propertyNameIterator = Properties
+        Iterator<String> propertyNameIterator = GlobalProperties
                 .getPropertiesOfInterestDatabase().keySet().iterator();
         
         List<Object> values = new ArrayList<>();

@@ -25,25 +25,25 @@ import java.util.Scanner;
 import java.util.Set;
 
 public class FileUtil {
-
-	public static Set<String> readConfigFilePerLine(String resourcePath)
-			throws IOException {
-		URL resURL = FileUtil.class.getResource(resourcePath);
-		URLConnection resConn = resURL.openConnection();
-		resConn.setUseCaches(false);
-		InputStream contents = resConn.getInputStream();
-
-		Scanner sc = new Scanner(contents);
-		Set<String> result = new HashSet<String>();
-
-		while (sc.hasNext()) {
-			String line = sc.nextLine();
-			if ((line != null) && (!line.isEmpty()) && (!line.startsWith("#"))) {
-				result.add(line.trim());
-			}
-		}
-		sc.close();
-
-		return result;
-	}
+    
+    public static Set<String> readConfigFilePerLine(String resourcePath)
+            throws IOException {
+        URL resURL = FileUtil.class.getResource(resourcePath);
+        URLConnection resConn = resURL.openConnection();
+        resConn.setUseCaches(false);
+        InputStream contents = resConn.getInputStream();
+        
+        Scanner sc = new Scanner(contents);
+        Set<String> result = new HashSet<String>();
+        
+        while (sc.hasNext()) {
+            String line = sc.nextLine();
+            if ((line != null) && (!line.isEmpty()) && (!line.startsWith("#"))) {
+                result.add(line.trim());
+            }
+        }
+        sc.close();
+        
+        return result;
+    }
 }

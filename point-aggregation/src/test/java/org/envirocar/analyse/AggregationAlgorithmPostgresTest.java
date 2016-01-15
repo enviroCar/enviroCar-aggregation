@@ -28,7 +28,7 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 
-import org.envirocar.analyse.properties.Properties;
+import org.envirocar.analyse.properties.GlobalProperties;
 import org.envirocar.analyse.util.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,7 +59,7 @@ public class AggregationAlgorithmPostgresTest {
         */
         AggregationAlgorithm algorithm = new AggregationAlgorithm();
         
-        HttpGet get = new HttpGet(Properties.getRequestTrackURL());
+        HttpGet get = new HttpGet(GlobalProperties.getRequestTrackURL());
         
         HttpClient client;
         try {

@@ -27,28 +27,28 @@ import com.google.inject.servlet.GuiceServletContextListener;
 import com.google.inject.servlet.ServletModule;
 
 public class AggregationGuiceServletConfig extends GuiceServletContextListener {
-
-	@Override
-	protected Injector getInjector() {
-		ServiceLoader<Module> loader = ServiceLoader.load(Module.class);
-
-		List<Module> modules = new ArrayList<Module>();
-		for (Module module : loader) {
-			modules.add(module);
-		}
-
-		modules.add(new ServletModule() {
-
-			@Override
-			protected void configureServlets() {
-				serve("/receiveTrack/*").with(ReceiveTracksServlet.class);
-				serve("/receiveTrack").with(ReceiveTracksServlet.class);
-				serve(AggregatedTracksServlet.PATH.concat("/*")).with(AggregatedTracksServlet.class);
-				serve(AggregatedTracksServlet.PATH).with(AggregatedTracksServlet.class);
-			}
-
-		});
-
-		return Guice.createInjector(modules);
-	}
+    
+    @Override
+    protected Injector getInjector() {
+        ServiceLoader<Module> loader = ServiceLoader.load(Module.class);
+        
+        List<Module> modules = new ArrayList<Module>();
+        for (Module module : loader) {
+            modules.add(module);
+        }
+        
+        modules.add(new ServletModule() {
+            
+            @Override
+            protected void configureServlets() {
+                serve("/receiveTrack/*").with(ReceiveTracksServlet.class);
+                serve("/receiveTrack").with(ReceiveTracksServlet.class);
+                serve(AggregatedTracksServlet.PATH.concat("/*")).with(AggregatedTracksServlet.class);
+                serve(AggregatedTracksServlet.PATH).with(AggregatedTracksServlet.class);
+            }
+            
+        });
+        
+        return Guice.createInjector(modules);
+    }
 }

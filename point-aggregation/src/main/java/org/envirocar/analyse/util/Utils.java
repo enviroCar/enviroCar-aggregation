@@ -23,7 +23,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.envirocar.analyse.properties.Properties;
+import org.envirocar.analyse.properties.GlobalProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -91,7 +91,7 @@ public class Utils {
         
         Map<String, Object> result = new HashMap<>();
         
-        for (String propertyName : Properties.getPropertiesOfInterestJson().keySet()) {
+        for (String propertyName : GlobalProperties.getPropertiesOfInterestJson().keySet()) {
             Object propertyObject = phenomenonMap.get(propertyName);
             
             if (propertyObject == null){

@@ -41,7 +41,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
 
-import org.envirocar.analyse.properties.Properties;
+import org.envirocar.analyse.properties.GlobalProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,7 +58,8 @@ public class PostgresConnection {
     
     private Connection connection;
     
-    public PostgresConnection() {
+    public PostgresConnection(String databaseName) {
+        this.databaseName = databaseName;
         try {
             createConnection();
         } catch (ClassNotFoundException e) {
@@ -90,18 +91,13 @@ public class PostgresConnection {
     }
     
     private String getDatabaseName() {
-        
-        if(databaseName == null || databaseName.equals("")){
-            this.databaseName = Properties.getProperty("databaseName").toString();
-        }
-        
         return databaseName;
     }
     
     private String getDatabasePath() {
         
         if(databasePath == null || databasePath.equals("")){
-            databasePath = Properties.getProperty("databasePath").toString();
+            databasePath = GlobalProperties.getProperty("databasePath").toString();
         }
         
         return databasePath;
@@ -110,7 +106,7 @@ public class PostgresConnection {
     private String getDatabaseUsername() {
         
         if(username == null || username.equals("")){
-            username = Properties.getProperty("username").toString();
+            username = GlobalProperties.getProperty("username").toString();
         }
         
         return username;
@@ -119,7 +115,7 @@ public class PostgresConnection {
     private String getDatabasePassword() {
         
         if(password == null || password.equals("")){
-            this.password = Properties.getProperty("password").toString();
+            this.password = GlobalProperties.getProperty("password").toString();
         }
         
         return password;

@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.envirocar.analyse.entities.Point;
-import org.envirocar.analyse.properties.Properties;
+import org.envirocar.analyse.properties.GlobalProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,7 +64,7 @@ public class CSVExport {
 		
 		String result = "ID;lon;lat;GeneralNumberOfPointsUsed;GeneralNumberOfTracksUsed;";
 		
-		Iterator<String> propertyNameIterator = Properties.getPropertiesOfInterestDatabase().keySet().iterator();
+		Iterator<String> propertyNameIterator = GlobalProperties.getPropertiesOfInterestDatabase().keySet().iterator();
 				
 		while (propertyNameIterator.hasNext()) {
 			String propertyName = (String) propertyNameIterator.next();
@@ -90,7 +90,7 @@ public class CSVExport {
 		
 		String result = point.getID() + ";" + point.getX() + ";" + point.getY() + ";" + point.getNumberOfPointsUsedForAggregation()+ ";" + point.getNumberOfTracksUsedForAggregation() + ";";
 		
-		Iterator<String> propertyNameIterator = Properties.getPropertiesOfInterestDatabase().keySet().iterator();
+		Iterator<String> propertyNameIterator = GlobalProperties.getPropertiesOfInterestDatabase().keySet().iterator();
 		
 		Map<String, Object> propertyMap = point.getPropertyMap();
 		
