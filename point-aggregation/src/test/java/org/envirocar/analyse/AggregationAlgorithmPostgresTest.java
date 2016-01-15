@@ -76,7 +76,7 @@ public class AggregationAlgorithmPostgresTest {
         * 0.00045 = 50m
         * 0.00018 = 20m
         */
-        AggregationAlgorithm algorithm = new AggregationAlgorithm(20);
+        AggregationAlgorithm algorithm = new AggregationAlgorithm();
         
         HttpGet get = new HttpGet(Properties.getRequestTrackURL());
         

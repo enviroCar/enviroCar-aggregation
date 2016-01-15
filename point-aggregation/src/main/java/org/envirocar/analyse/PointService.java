@@ -16,25 +16,29 @@
  */
 package org.envirocar.analyse;
 
+import java.util.List;
 import org.envirocar.analyse.entities.Point;
 
 public interface PointService {
-	
-	Point aggregate(Point point, Point aggregationPoint, String trackId);
-
-	/**
-	 * @param point the relating point
-	 * @param distance the maximum distance in meters
-	 * @return
-	 */
-	Point getNearestNeighbor(Point point, double distance, double maxBearingDelta);
-
-	void addToResultSet(Point newPoint);
-	
-	boolean updateResultSet(String idOfPointToBeReplaced, Point replacementPoint);
-
-	boolean trackAlreadyAggregated(String trackId);
-
-	boolean insertTrackIntoAggregatedTracksTable(String trackId);
-	
+    
+    MeasurementRelation aggregate(Point point, Point aggregationPoint, String trackId);
+    
+    /**
+     * @param point the relating point
+     * @param distance the maximum distance in meters
+     * @param maxBearingDelta an implementation shall take the maxBearingDelta into consideration if it is != 0.0
+     * @return
+     */
+    Point getNearestNeighbor(Point point, double distance, double maxBearingDelta);
+    
+    MeasurementRelation addToResultSet(Point newPoint);
+    
+    boolean updateResultSet(String idOfPointToBeReplaced, Point replacementPoint);
+    
+    boolean trackAlreadyAggregated(String trackId);
+    
+    boolean insertTrackIntoAggregatedTracksTable(String trackId);
+    
+    void insertMeasurementRelations(List<MeasurementRelation> newRelations);
+    
 }

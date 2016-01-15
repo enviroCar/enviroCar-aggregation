@@ -300,7 +300,7 @@ public class PostgresPointService implements PointService {
     
     
     @Override
-    public Point aggregate(Point point, Point nearestNeighborPoint, String trackId) {
+    public MeasurementRelation aggregate(Point point, Point nearestNeighborPoint, String trackId) {
         
         Point aggregatedPoint = new InMemoryPoint(point);
         
@@ -328,30 +328,28 @@ public class PostgresPointService implements PointService {
         LOGGER.debug("Aggregated: " + aggregatedPoint.getID() + " and " + nearestNeighborPoint.getID());
         LOGGER.debug("NumberOfPoints " + aggregatedPoint.getNumberOfPointsUsedForAggregation());
         
-        insertMeasurementRelation(point.getID(), Integer.parseInt(nearestNeighborPoint.getID()));
-        
         /*
         * store result in DB
         */
         updateResultSet(nearestNeighborPoint.getID(),
                 aggregatedPoint);
         
-        return aggregatedPoint;
+        return new MeasurementRelation(point.getID(), Integer.parseInt(nearestNeighborPoint.getID()));
     }
     
     
     @Override
-    public void addToResultSet(Point newPoint) {
+    public MeasurementRelation addToResultSet(Point newPoint) {
         
         int newId;
         try {
             newId = insertPoint(newPoint);
         } catch (SQLException e) {
             LOGGER.warn(e.getMessage(), e);
-            return;
+            return null;
         }
         
-        insertMeasurementRelation(newPoint.getID(), newId);
+        return new MeasurementRelation(newPoint.getID(), newId);
     }
     
     private String createST_GeometryFromTextStatement(double x, double y){
@@ -360,12 +358,29 @@ public class PostgresPointService implements PointService {
                 + " " + y + ")', " + spatial_ref_sys + ")";
     }
     
-    private boolean insertMeasurementRelation(String originalID, int aggregatedID){
+    @Override
+    public void insertMeasurementRelations(List<MeasurementRelation> relations){
+        StringBuilder sb = new StringBuilder();
         
-        String statement = "INSERT INTO " + measurementRelationsTableName
-                + "(" + idField + ", " + aggregated_measurement_idField + ") VALUES ('"  + originalID + "', " + aggregatedID + ");";
+        sb.append("INSERT INTO ");
+        sb.append(measurementRelationsTableName);
+        sb.append("(");
+        sb.append(idField);
+        sb.append(", ");
+        sb.append(aggregated_measurement_idField);
+        sb.append(") VALUES ");
         
-        return this.connection.executeUpdateStatement(statement);
+        for (MeasurementRelation relation : relations) {
+            String originalID = relation.getOriginalId();
+            int aggregatedID = relation.getAggregateId();
+            sb.append(String.format("('%s', %s)", originalID, aggregatedID));
+            sb.append(",");
+        }
+        
+        sb.delete(sb.length() - 1, sb.length());
+
+        this.connection.executeUpdateStatement(sb.toString());
+        LOGGER.info("Inserted MeasurementRelations: "+relations.size());
     }
     
     public boolean removePoint(String pointID, String tableName){

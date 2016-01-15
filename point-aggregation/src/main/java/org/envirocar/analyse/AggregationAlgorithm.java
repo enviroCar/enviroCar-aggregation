@@ -46,6 +46,7 @@ import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
 import org.envirocar.analyse.categories.DEBasedCategory;
 import org.envirocar.analyse.categories.RegionalTimeBasedCategory;
+import org.envirocar.analyse.categories.TimeBasedCategory;
 import org.joda.time.DateTime;
 
 /**
@@ -114,6 +115,7 @@ public class AggregationAlgorithm {
         
         Point nextPoint;
         DateTime trackTime = null;
+        List<MeasurementRelation> newRelations = new ArrayList<>();
         while (newPoints.hasNext()) {
             nextPoint = newPoints.next();
             
@@ -128,6 +130,9 @@ public class AggregationAlgorithm {
             if (useCategories) {
                 nextPoint.setTimeCategory(timeBasedManager.fromTime(nextPoint.getTime()));
             }
+            else {
+                nextPoint.setTimeCategory(TimeBasedCategory.NO_CATEGORY);
+            }
             
             /*
             * check if point is fit for aggregation (one or more value not null or 0)
@@ -140,7 +145,6 @@ public class AggregationAlgorithm {
             /*
             * get nearest neighbor from resultSet
             */
-            
             Point nearestNeighbor = pointService.getNearestNeighbor(
                     nextPoint, distance, useBearing ? maxBearingDelta : 0.0);
             
@@ -153,8 +157,7 @@ public class AggregationAlgorithm {
                 * replaceable)
                 */
                 LOGGER.info("aggregating point: "+ nextPoint.getID());
-                pointService.aggregate(nextPoint, nearestNeighbor, trackId);
-                
+                newRelations.add(pointService.aggregate(nextPoint, nearestNeighbor, trackId));
             } else {
                 /*
                 * if there is no nearest neighbor
@@ -166,10 +169,11 @@ public class AggregationAlgorithm {
                 /*
                 * add point to result set, give it a new id
                 */
-                pointService.addToResultSet(nextPoint);
+                newRelations.add(pointService.addToResultSet(nextPoint));
             }
         }
         
+        pointService.insertMeasurementRelations(newRelations);
     }
     
     
