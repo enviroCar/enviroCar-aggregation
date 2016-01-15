@@ -360,26 +360,39 @@ public class PostgresPointService implements PointService {
     
     @Override
     public void insertMeasurementRelations(List<MeasurementRelation> relations){
-        StringBuilder sb = new StringBuilder();
+        int relationsIndex = 0;
+        int bulkSize = 500;
         
-        sb.append("INSERT INTO ");
-        sb.append(measurementRelationsTableName);
-        sb.append("(");
-        sb.append(idField);
-        sb.append(", ");
-        sb.append(aggregated_measurement_idField);
-        sb.append(") VALUES ");
-        
-        for (MeasurementRelation relation : relations) {
-            String originalID = relation.getOriginalId();
-            int aggregatedID = relation.getAggregateId();
-            sb.append(String.format("('%s', %s)", originalID, aggregatedID));
-            sb.append(",");
+        boolean inRange = true;
+        while (inRange) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("INSERT INTO ");
+            sb.append(measurementRelationsTableName);
+            sb.append("(");
+            sb.append(idField);
+            sb.append(", ");
+            sb.append(aggregated_measurement_idField);
+            sb.append(") VALUES ");
+            
+            for (int i = relationsIndex; i < relationsIndex+bulkSize; i++) {
+                if (i >= relations.size()) {
+                    inRange = false;
+                    break;
+                }
+                
+                MeasurementRelation relation = relations.get(i);
+                String originalID = relation.getOriginalId();
+                int aggregatedID = relation.getAggregateId();
+                sb.append(String.format("('%s', %s)", originalID, aggregatedID));
+                sb.append(",");
+            }
+            
+            sb.delete(sb.length() - 1, sb.length());
+            this.connection.executeUpdateStatement(sb.toString());
+            
+            relationsIndex += bulkSize;
         }
-        
-        sb.delete(sb.length() - 1, sb.length());
 
-        this.connection.executeUpdateStatement(sb.toString());
         LOGGER.info("Inserted MeasurementRelations: "+relations.size());
     }
     
