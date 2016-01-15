@@ -73,7 +73,7 @@ public class AggregationAlgorithm {
     }
     
     public AggregationAlgorithm(double distance) {
-        pointService = new PostgresPointService(this.getBbox());
+        pointService = new PostgresPointService(this.bbox);
         this.distance = distance;
         
         this.timeBasedManager = new DEBasedCategory();
@@ -178,18 +178,7 @@ public class AggregationAlgorithm {
     
     
     public void runAlgorithm(final String trackID) throws IOException {
-        
-        LOGGER.debug("");
-        LOGGER.debug("");
-        LOGGER.debug("");
-        LOGGER.debug("");
-        
-        LOGGER.debug("Track: " + trackID);
-        
-        LOGGER.debug("");
-        LOGGER.debug("");
-        LOGGER.debug("");
-        LOGGER.debug("");
+        LOGGER.debug("Aggregating Track: " + trackID);
         
         if (pointService.trackAlreadyAggregated(trackID)) {
             LOGGER.info("Track already aggregated. skipping. "+trackID);
@@ -227,9 +216,9 @@ public class AggregationAlgorithm {
             
             Object numberObject = point.getProperty(propertyName);
             
-            if(numberObject instanceof Number){
+            if (numberObject instanceof Number) {
                 result = result || !Utils.isNumberObjectNullOrZero((Number) numberObject);
-            }else{
+            } else{
                 /*
                 * not a number, we cannot aggregate this currently
                 */
