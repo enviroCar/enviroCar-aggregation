@@ -18,11 +18,15 @@ package org.envirocar.analyse.categories;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
  */
 public class DEBasedCategory implements RegionalTimeBasedCategory {
+    
+    private static final Logger logger = LoggerFactory.getLogger(DEBasedCategory.class);
     
     private DateTimeZone timeZone;
 
@@ -48,6 +52,8 @@ public class DEBasedCategory implements RegionalTimeBasedCategory {
         else if (moy == 3) {
             DateTime lastSundayOfMarch = new DateTime(getLastSundayOfMarch(trackTime.getYear()),
                     DateTimeZone.forOffsetHours(1)).plusHours(2);
+            logger.info("lastSundayOfMarch: "+lastSundayOfMarch.toString());
+            logger.info("trackTime: "+trackTime.toString());
             if (trackTime.isBefore(lastSundayOfMarch)) {
                 utcOffset = "+01:00";
             }
