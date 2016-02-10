@@ -22,6 +22,7 @@
 package org.envirocar.aggregation;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -31,6 +32,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
 import java.util.function.Consumer;
+import java.util.logging.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,20 +49,24 @@ public class Util {
         final List<Properties> props = new ArrayList<>();
         
         if (res != null) {
-            Path instanceReadme = Paths.get(res.getPath());
-            if (Files.exists(instanceReadme)) {
-                Files.newDirectoryStream(instanceReadme.getParent(), "*.{properties}").forEach(new Consumer<Path>() {
-                    @Override
-                    public void accept(Path t) {
-                        Properties p = new Properties();
-                        try {
-                            p.load(Files.newBufferedReader(t));
-                            props.add(p);
-                        } catch (IOException ex) {
-                            logger.warn("Could not load algorithm instnace: "+p, ex);
+            try {
+                Path instanceReadme = Paths.get(res.toURI());
+                if (Files.exists(instanceReadme)) {
+                    Files.newDirectoryStream(instanceReadme.getParent(), "*.{properties}").forEach(new Consumer<Path>() {
+                        @Override
+                        public void accept(Path t) {
+                            Properties p = new Properties();
+                            try {
+                                p.load(Files.newBufferedReader(t));
+                                props.add(p);
+                            } catch (IOException ex) {
+                                logger.warn("Could not load algorithm instnace: "+p, ex);
+                            }
                         }
-                    }
-                });
+                    });
+                }
+            } catch (URISyntaxException ex) {
+                throw new IOException(ex);
             }
         }
         
