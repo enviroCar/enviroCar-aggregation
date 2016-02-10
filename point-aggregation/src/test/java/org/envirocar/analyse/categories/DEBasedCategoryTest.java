@@ -34,12 +34,12 @@ public class DEBasedCategoryTest {
         DateTime lastMarch = deb.getLastSunday(2016, 3, 31);
         
         Assert.assertThat(lastMarch.getDayOfWeek(), CoreMatchers.is(DateTimeConstants.SUNDAY));
-        Assert.assertThat(lastMarch, CoreMatchers.equalTo(new DateTime(2016, 03, 27, 0, 0)));
+        Assert.assertThat(lastMarch, CoreMatchers.equalTo(new DateTime(2016, 03, 27, 0, 0, DateTimeZone.UTC)));
         
         DateTime lastOct = deb.getLastSunday(2016, 10, 31);
         
         Assert.assertThat(lastOct.getDayOfWeek(), CoreMatchers.is(DateTimeConstants.SUNDAY));
-        Assert.assertThat(lastOct, CoreMatchers.equalTo(new DateTime(2016, 10, 30, 0, 0)));
+        Assert.assertThat(lastOct, CoreMatchers.equalTo(new DateTime(2016, 10, 30, 0, 0, DateTimeZone.UTC)));
     }
     
     @Test
@@ -53,10 +53,10 @@ public class DEBasedCategoryTest {
         Assert.assertThat(deb.getTimeZone().getID(), CoreMatchers.is("+02:00"));
         
         
-        deb.updateTimeZone(new DateTime("2016-10-30T00:59:59Z"));
+        deb.updateTimeZone(new DateTime("2016-10-30T02:59:59Z"));
         Assert.assertThat(deb.getTimeZone().getID(), CoreMatchers.is("+02:00"));
         
-        deb.updateTimeZone(new DateTime("2016-10-30T01:00:01Z"));
+        deb.updateTimeZone(new DateTime("2016-10-30T03:00:01Z"));
         Assert.assertThat(deb.getTimeZone().getID(), CoreMatchers.is("+01:00"));
     }
     

@@ -51,7 +51,7 @@ public class DEBasedCategory implements RegionalTimeBasedCategory {
         
         else if (moy == 3) {
             DateTime lastSundayOfMarch = new DateTime(getLastSundayOfMarch(trackTime.getYear()),
-                    DateTimeZone.forOffsetHours(1)).plusHours(2);
+                    DateTimeZone.forOffsetHours(1)).plusHours(1);
             logger.info("lastSundayOfMarch: "+lastSundayOfMarch.toString());
             logger.info("trackTime: "+trackTime.toString());
             if (trackTime.isBefore(lastSundayOfMarch)) {
@@ -79,7 +79,7 @@ public class DEBasedCategory implements RegionalTimeBasedCategory {
     }
 
     protected DateTime getLastSunday(int year, int month, int day) {
-        DateTime lastDay = new DateTime(year, month, day, 0, 0);
+        DateTime lastDay = new DateTime(year, month, day, 0, 0, DateTimeZone.UTC);
         logger.info("lastDay: " +lastDay.toString());
         
         int dow = lastDay.getDayOfWeek();
