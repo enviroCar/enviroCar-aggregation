@@ -14,22 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- /**
-  * Copyright 2016 52°North Initiative for Geospatial Open Source
-  * Software GmbH
-  *
-  * Licensed under the Apache License, Version 2.0 (the "License");
-  * you may not use this file except in compliance with the License.
-  * You may obtain a copy of the License at
-  *
-  *    http://www.apache.org/licenses/LICENSE-2.0
-  *
-  * Unless required by applicable law or agreed to in writing, software
-  * distributed under the License is distributed on an "AS IS" BASIS,
-  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  * See the License for the specific language governing permissions and
-  * limitations under the License.
-  */
 package org.envirocar.analyse;
 
 import java.sql.DatabaseMetaData;
@@ -53,6 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.vividsolutions.jts.geom.Geometry;
+import java.io.IOException;
 
 /**
  * <code>Pointservice</code> implementation using a Postgres database to store the aggregated measurements.
@@ -148,8 +133,8 @@ public class PostgresPointService implements PointService {
             ", h." + co2NumberOfContributingPointsField + 
             ", h." + contribTrackCountField + 
             ", h." + lastContributingTrackField + 
-            ", ST_AsText(h.the_geom) as " + geometryPlainTextField + 
-            ", ST_distance(" + geomFromText_exp + ",h.the_geom) as " + distField + 
+            ", ST_AsText(h."+geometryEncodedField+") as " + geometryPlainTextField + 
+            ", ST_distance(" + geomFromText_exp + ",h."+geometryEncodedField+") as " + distField + 
             " from " + aggregated_MeasurementsTableName + " h "
             + "where ST_DWithin(" + geomFromText_exp + "::geography,h." + geometryEncodedField + "::geography,"
             + distance_exp + ") " + "order by " + distField + " ASC;";
@@ -633,6 +618,15 @@ public class PostgresPointService implements PointService {
         }
         
         return true;
+    }
+
+    @Override
+    public void shutdown() throws IOException {
+        try {
+            this.connection.shutdown();
+        } catch (SQLException ex) {
+            throw new IOException(ex);
+        }
     }
 
 }

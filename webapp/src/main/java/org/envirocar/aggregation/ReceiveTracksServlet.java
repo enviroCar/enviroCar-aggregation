@@ -44,16 +44,7 @@ import com.google.inject.Module;
 import com.google.inject.Singleton;
 import com.google.inject.servlet.GuiceServletContextListener;
 import com.google.inject.servlet.ServletModule;
-import java.net.URL;
-import java.nio.file.DirectoryStream;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Properties;
-import java.util.function.Consumer;
-import java.util.logging.Level;
 
 @Singleton
 public class ReceiveTracksServlet extends HttpServlet {
@@ -68,16 +59,18 @@ public class ReceiveTracksServlet extends HttpServlet {
     private ExecutorService executor;
     
     private Set<String> allowedProducers;
-    private List<AggregationAlgorithm> algorithms;
+    private List<AggregationAlgorithm> algorithms = new ArrayList<>();
     
     public ReceiveTracksServlet() throws IOException {
         this.executor = Executors.newSingleThreadExecutor();
-        instantiateAlgorithmInstances();
+        logger.info("Servlet created");
     }
     
+    @Override
     public void init() throws ServletException {
         super.init();
         try {
+            instantiateAlgorithmInstances();
             this.allowedProducers = FileUtil
                     .readConfigFilePerLine(PRODUCERS_FILE);
         } catch (IOException e) {
@@ -90,6 +83,14 @@ public class ReceiveTracksServlet extends HttpServlet {
     public void destroy() {
         super.destroy();
         this.executor.shutdown();
+        
+        try {
+            for (AggregationAlgorithm algorithm : algorithms) {
+                algorithm.shutdown();
+            }
+        } catch (IOException e) {
+            logger.warn(e.getMessage(), e);
+        }
     }
     
     
@@ -157,23 +158,8 @@ public class ReceiveTracksServlet extends HttpServlet {
     }
 
     private void instantiateAlgorithmInstances() throws IOException {
-        URL res = getClass().getResource("/algorithm_instances/README.md");
-        if (res != null) {
-            Path instanceReadme = Paths.get(res.getPath());
-            if (Files.exists(instanceReadme)) {
-                Files.newDirectoryStream(instanceReadme.getParent(), "*.{properties}").forEach(new Consumer<Path>() {
-                    @Override
-                    public void accept(Path t) {
-                        Properties p = new Properties();
-                        try {
-                            p.load(Files.newBufferedReader(t));
-                            algorithms.add(new AggregationAlgorithm(p));
-                        } catch (IOException ex) {
-                            logger.warn("Could not load algorithm instnace: "+p, ex);
-                        }
-                    }
-                });
-            }
+        for (Properties algorithmConfiguration : Util.getAlgorithmConfigurations()) {
+            algorithms.add(new AggregationAlgorithm(algorithmConfiguration));
         }
     }
     

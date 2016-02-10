@@ -36,7 +36,7 @@ public class NeighbourDistanceTest {
                 11.54695757, 48.60664279,
                 null, 1, 1, null, null);
         
-        PostgresPointService pps = new PostgresPointService();
+        PostgresPointService pps = new PostgresPointService("aggregation");
         
         pps.addToResultSet(p);
         

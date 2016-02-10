@@ -96,7 +96,7 @@ public class AggregationAlgorithm {
         this.useCategories = useCategories;
         this.maxBearingDelta = maxBearing;
         this.useBearing = maxBearingDelta != 0.0;
-        this.databaseName = "envirocar_aggregation";
+        this.databaseName = "aggregation";
         
         this.pointService = new PostgresPointService(this.bbox, this.databaseName);
     }
@@ -340,4 +340,9 @@ public class AggregationAlgorithm {
     public void setDistance(double distance) {
         this.distance = distance;
     }
+
+    public void shutdown() throws IOException {
+        this.pointService.shutdown();
+    }
+
 }

@@ -207,5 +207,9 @@ public class PostgresConnection {
         return result;
     }
     
+    public void shutdown() throws SQLException {
+        this.connection.close();
+    }
+    
     
 }

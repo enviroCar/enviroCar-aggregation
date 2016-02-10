@@ -38,6 +38,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.inject.Singleton;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 @Singleton
 public class AggregatedTracksServlet extends HttpServlet {
@@ -45,10 +52,11 @@ public class AggregatedTracksServlet extends HttpServlet {
     /**
      *
      */
+    private static final Logger logger = LoggerFactory.getLogger(AggregatedTracksServlet.class);
     private static final long serialVersionUID = 1L;
     private static final String AGGREGATION_DATE = "aggregation_date";
     public static final String PATH = "/aggregatedTracks";
-    private PostgresConnection connection;
+    private final Map<String, PostgresConnection> connections = new HashMap<>();
     private String aggregatedTracksTableName;
     private String query;
     private SimpleDateFormat df;
@@ -59,7 +67,15 @@ public class AggregatedTracksServlet extends HttpServlet {
     public void init() throws ServletException {
         super.init();
         
-        this.connection = new PostgresConnection();
+        try {
+            for (Properties p : Util.getAlgorithmConfigurations()) {
+                String db = p.getProperty("database");
+                this.connections.put(db, new PostgresConnection(db));
+            }
+        } catch (IOException ex) {
+            logger.error(ex.getMessage(), ex);
+            throw new ServletException(ex);
+        }
         
         this.aggregatedTracksTableName = (String) GlobalProperties
                 .getProperty("aggregatedTracksTableName");
@@ -85,61 +101,118 @@ public class AggregatedTracksServlet extends HttpServlet {
         String uri = req.getRequestURI();
         String subPath = uri.substring(uri.indexOf(PATH) + PATH.length());
         
-        String trackId = null;
-        if (!subPath.isEmpty() && !(subPath.length() == 1 && subPath.equals("/"))) {
-            trackId = subPath.startsWith("/") ? subPath.substring(1) : subPath;
-        }
+        String[] dbAndTrackId = resolveDatabaseNameAndTrackId(subPath);
         
+
         String json;
-        try {
-            if (trackId != null) {
-                json = createTrackExists(trackId);
+        if (dbAndTrackId == null || dbAndTrackId.length == 0) {
+            json = "{\"error\": \"no database name provided\"}";
+            resp.setStatus(400);
+        }
+        else {
+            if (dbAndTrackId.length >= 1) {
+                String dbName = dbAndTrackId[0];
+                String trackId = dbAndTrackId.length > 1 ? dbAndTrackId[1] : null;
+                try {
+                    if (trackId != null) {
+                        json = createTrackExists(dbName, trackId);
+                        resp.setStatus(200);
+                    }
+                    else {
+                        json = createAggregatedTracksList(dbName);
+                        resp.setStatus(200);
+                    }
+                } catch (SQLException e) {
+                    throw new IOException(e);
+                }
             }
             else {
-                json = createAggregatedTracksList();
+                json = "{\"error\": \"invalid request structure\"}";
+                resp.setStatus(400);
             }
-        } catch (SQLException e) {
-            throw new IOException(e);
         }
         
+
+        /**
+         * write the json
+         */
         writer.append(json);
         
         writer.flush();
         writer.close();
         
-        resp.setStatus(200);
     }
     
-    private String createTrackExists(String trackId) throws SQLException {
-        ResultSet rs = this.connection.executeQueryStatement(String.format(trackQuery, trackId));
+    protected String[] resolveDatabaseNameAndTrackId(String subPath) {
+        String dbAndTrackId = null;
+        if (!subPath.isEmpty() && !(subPath.length() == 1 && subPath.equals("/"))) {
+            dbAndTrackId = subPath.startsWith("/") ? subPath.substring(1) : subPath;
+        }
+
+        if (dbAndTrackId == null || dbAndTrackId.isEmpty()) {
+            return new String[0];
+        }
+        else {
+            String[] array = dbAndTrackId.split("/");
+            
+            List<String> result = new ArrayList<>(array.length);
+            for (int i = 0; i < array.length; i++) {
+                array[i] = array[i].replace("/", "");
+                if (!array[i].isEmpty()) {
+                    result.add(array[i]);
+                }
+            }
+            
+            return result.toArray(new String[result.size()]);
+        }
+    }
+    
+    private String createTrackExists(String db, String trackId) throws SQLException {
+        PostgresConnection conn = this.connections.get(db);
+        
+        if (conn == null) {
+            return "{\"error\": \"invalid database\"}";
+        }
+        
+        ResultSet rs = conn.executeQueryStatement(String.format(trackQuery, trackId));
         
         ObjectNode result = om.createObjectNode();
         
-        result.put("aggregated", rs.next());
+        result.put("aggregated", rs != null ? rs.next() : false);
         
-        rs.close();
+        if (rs != null) {
+            rs.close();
+        }
         
         return result.toString();
     }
     
-    private String createAggregatedTracksList() throws SQLException {
-        ResultSet rs = this.connection.executeQueryStatement(query);
+    private String createAggregatedTracksList(String db) throws SQLException {
+        PostgresConnection conn = this.connections.get(db);
+        
+        if (conn == null) {
+            return "{\"error\": \"invalid database\"}";
+        }
+        
+        ResultSet rs = conn.executeQueryStatement(query);
         
         ArrayNode array = om.createArrayNode();
         ObjectNode object;
         String id;
         Timestamp ts;
-        while (rs.next()) {
-            object = om.createObjectNode();
-            id = rs.getString("id");
-            ts = rs.getTimestamp(AGGREGATION_DATE);
-            
-            object.put(id, df.format(new Date(ts.getTime())));
-            
-            array.add(object);
+        if (rs != null) {
+            while (rs.next()) {
+                object = om.createObjectNode();
+                id = rs.getString("id");
+                ts = rs.getTimestamp(AGGREGATION_DATE);
+
+                object.put(id, df.format(new Date(ts.getTime())));
+
+                array.add(object);
+            }
+
+            rs.close();
         }
-        
-        rs.close();
         
         ObjectNode node = om.createObjectNode();
         

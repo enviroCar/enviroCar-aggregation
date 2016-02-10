@@ -16,6 +16,7 @@
  */
 package org.envirocar.analyse;
 
+import java.io.IOException;
 import java.util.List;
 import org.envirocar.analyse.entities.Point;
 
@@ -40,5 +41,7 @@ public interface PointService {
     boolean insertTrackIntoAggregatedTracksTable(String trackId);
     
     void insertMeasurementRelations(List<MeasurementRelation> newRelations);
+
+    public void shutdown() throws IOException;
     
 }
