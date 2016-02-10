@@ -80,14 +80,18 @@ public class DEBasedCategory implements RegionalTimeBasedCategory {
 
     protected DateTime getLastSunday(int year, int month, int day) {
         DateTime lastDay = new DateTime(year, month, day, 0, 0);
-
+        logger.info("lastDay: " +lastDay.toString());
+        
         int dow = lastDay.getDayOfWeek();
+        logger.info("dow: "+dow);
         
         if (dow == 7) {
             return lastDay;
         }
         else {
-            return lastDay.minusDays(dow);
+            DateTime result = lastDay.minusDays(dow);
+            logger.info("result: " +result.toString());
+            return result;
         }
     }
 
