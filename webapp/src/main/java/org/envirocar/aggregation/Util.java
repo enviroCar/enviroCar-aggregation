@@ -28,9 +28,11 @@ import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.channels.Channels;
+import java.nio.file.CopyOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -81,7 +83,7 @@ public class Util {
 
     static Path writeToTempFile(InputStream inputStream) throws IOException {
         Path target = Files.createTempFile(UUID.randomUUID().toString(), ".json");
-        Files.copy(inputStream, target);
+        Files.copy(inputStream, target, StandardCopyOption.REPLACE_EXISTING);
         return target;
     }
     
