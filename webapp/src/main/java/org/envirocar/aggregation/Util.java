@@ -21,9 +21,13 @@
  */
 package org.envirocar.aggregation;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.channels.Channels;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -31,8 +35,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
+import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.logging.Level;
+import javax.servlet.ServletInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,6 +77,12 @@ public class Util {
         }
         
         return props;
+    }
+
+    static Path writeToTempFile(InputStream inputStream) throws IOException {
+        Path target = Files.createTempFile(UUID.randomUUID().toString(), ".json");
+        Files.copy(inputStream, target);
+        return target;
     }
     
 }

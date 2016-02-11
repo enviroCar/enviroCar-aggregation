@@ -44,6 +44,9 @@ import com.google.inject.Module;
 import com.google.inject.Singleton;
 import com.google.inject.servlet.GuiceServletContextListener;
 import com.google.inject.servlet.ServletModule;
+import java.nio.channels.Channels;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Properties;
 
 @Singleton
@@ -98,13 +101,12 @@ public class ReceiveTracksServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         final String contentType = req.getHeader("Content-Type");
-        final InputStream stream = req.getInputStream();
+        
+        final Path tempFile = Util.writeToTempFile(req.getInputStream());
         
         if (!(contentType != null && contentType.startsWith("application/json"))) {
             throw new IllegalArgumentException("Invalid ContentType");
         }
-        
-        final Map<?, ?> json = Utils.parseJsonStream(stream);
         
         if (verifyRemoteHost(req.getRemoteHost())) {
             this.executor.submit(new Runnable() {
@@ -112,6 +114,8 @@ public class ReceiveTracksServlet extends HttpServlet {
                     for (AggregationAlgorithm algorithm : algorithms) {
                         PointViaJsonMapIterator it;
                         try {
+                            InputStream stream = Files.newInputStream(tempFile);
+                            final Map<?, ?> json = Utils.parseJsonStream(stream);
                             it = new PointViaJsonMapIterator(json);
                             algorithm.runAlgorithm(it, it.getOriginalTrackId());
                         } catch (IOException e) {
