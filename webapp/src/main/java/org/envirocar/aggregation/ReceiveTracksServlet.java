@@ -116,6 +116,7 @@ public class ReceiveTracksServlet extends HttpServlet {
                         try {
                             InputStream stream = Files.newInputStream(tempFile);
                             final Map<?, ?> json = Utils.parseJsonStream(stream);
+                            Files.delete(tempFile);
                             it = new PointViaJsonMapIterator(json);
                             algorithm.runAlgorithm(it, it.getOriginalTrackId());
                         } catch (IOException e) {
