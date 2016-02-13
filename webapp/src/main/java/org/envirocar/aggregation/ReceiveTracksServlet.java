@@ -48,6 +48,7 @@ import java.nio.channels.Channels;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
+import java.util.logging.Level;
 
 @Singleton
 public class ReceiveTracksServlet extends HttpServlet {
@@ -111,17 +112,28 @@ public class ReceiveTracksServlet extends HttpServlet {
         if (verifyRemoteHost(req.getRemoteHost())) {
             this.executor.submit(new Runnable() {
                 public void run() {
+                    final Map<?, ?> json;
+                    try {
+                        InputStream stream = Files.newInputStream(tempFile);
+                        json = Utils.parseJsonStream(stream);
+                    } catch (IOException ex) {
+                        logger.warn("Could not parse json temp file", ex);
+                        return;
+                    }
+
+                    try {
+                        Files.delete(tempFile);
+                    } catch (IOException ex) {
+                        logger.warn("Could not delete temp file", ex);
+                    }
+                    
                     for (AggregationAlgorithm algorithm : algorithms) {
-                        PointViaJsonMapIterator it;
                         try {
-                            InputStream stream = Files.newInputStream(tempFile);
-                            final Map<?, ?> json = Utils.parseJsonStream(stream);
-                            Files.delete(tempFile);
-                            it = new PointViaJsonMapIterator(json);
+                            PointViaJsonMapIterator it = new PointViaJsonMapIterator(json);
                             algorithm.runAlgorithm(it, it.getOriginalTrackId());
                         } catch (IOException e) {
                             logger.warn("Could not inizialize iterator. Skipping track.", e);
-                            return;
+                            continue;
                         }                        
                     }
                 }
