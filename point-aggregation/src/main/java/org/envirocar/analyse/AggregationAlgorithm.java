@@ -130,6 +130,8 @@ public class AggregationAlgorithm {
             return;
         }
         
+        LOGGER.info("Aggregating Track: " + trackId);
+        
         pointService.insertTrackIntoAggregatedTracksTable(trackId);
         
         Point nextPoint;
