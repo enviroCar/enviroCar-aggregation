@@ -157,7 +157,7 @@ public class AggregationAlgorithm {
             * check if point is fit for aggregation (one or more value not null or 0)
             */
             if(!isFitForAggregation(nextPoint)){
-                LOGGER.info("Skipping original point " + nextPoint.getID() + ". All values are null or 0.");
+                LOGGER.debug("Skipping original point " + nextPoint.getID() + ". All values are null or 0.");
                 continue;
             }
             
@@ -175,7 +175,7 @@ public class AggregationAlgorithm {
                 * aggregate values (avg, function should be
                 * replaceable)
                 */
-                LOGGER.info("aggregating point: "+ nextPoint.getID());
+                LOGGER.debug("aggregating point: "+ nextPoint.getID());
                 newRelations.add(pointService.aggregate(nextPoint, nearestNeighbor, trackId));
             } else {
                 /*
@@ -183,7 +183,7 @@ public class AggregationAlgorithm {
                 *
                 * add point to resultSet
                 */
-                LOGGER.info("No nearest neighbor found for " + nextPoint.getID() + ". Adding to resultSet.");
+                LOGGER.debug("No nearest neighbor found for " + nextPoint.getID() + ". Adding to resultSet.");
                 
                 /*
                 * add point to result set, give it a new id
@@ -197,7 +197,7 @@ public class AggregationAlgorithm {
     
     
     public void runAlgorithm(final String trackID) throws IOException {
-        LOGGER.debug("Aggregating Track: " + trackID);
+        LOGGER.info("Aggregating Track: " + trackID);
         
         if (pointService.trackAlreadyAggregated(trackID)) {
             LOGGER.info("Track already aggregated. skipping. "+trackID);
